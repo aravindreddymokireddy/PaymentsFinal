@@ -21,9 +21,11 @@ public class Customer {
 	@ManyToOne
 	@JoinColumn(name="bic")
 	private Bank bank;
+	@Column(nullable=true)
+	private boolean isTerror;
 
 	public Customer(String customerId, String accountHolderName, boolean overdraftFlag, double clearBalance,
-			String customerAddress, String customerCity, String customerType, Bank bank) {
+			String customerAddress, String customerCity, String customerType, Bank bank, boolean isTerror) {
 		super();
 		this.customerId = customerId;
 		this.accountHolderName = accountHolderName;
@@ -33,6 +35,7 @@ public class Customer {
 		this.customerCity = customerCity;
 		this.customerType = customerType;
 		this.bank = bank;
+		this.isTerror = isTerror;
 	}
 
 	public Customer() {
@@ -104,11 +107,20 @@ public class Customer {
 		this.bank = bank;
 	}
 
+	public boolean isTerror() {
+		return isTerror;
+	}
+
+	public void setTerror(boolean isTerror) {
+		this.isTerror = isTerror;
+	}
+
 	@Override
 	public String toString() {
 		return "Customer [customerId=" + customerId + ", accountHolderName=" + accountHolderName + ", overdraftFlag="
 				+ overdraftFlag + ", clearBalance=" + clearBalance + ", customerAddress=" + customerAddress
-				+ ", customerCity=" + customerCity + ", customerType=" + customerType + ", bank=" + bank + "]";
+				+ ", customerCity=" + customerCity + ", customerType=" + customerType + ", bank=" + bank + ", isTerror="
+				+ isTerror + "]";
 	}
 
 	

@@ -76,6 +76,11 @@ public class EmployeeService {
 			}
 			
 			Customer sender = senderOptional.get();
+			
+			if(transaction.getSenderBic().equals(sender.getBank().getBic()) == false) {
+				return ResponseHandler.generateResponse(400, "Sender BIC does not match with given BIC.");
+			}
+			
 //		System.out.println(sender);
 			if(transaction.getCurrencyAmount() <= 0) {
 				return ResponseHandler.generateResponse(400, "Amount must be greater than 0.");
@@ -95,6 +100,10 @@ public class EmployeeService {
 				return ResponseHandler.generateResponse(400, "Receiver doesn't exist.");
 			}
 			Customer receiver = receiverOptional.get();
+			
+			if(receiver.isTerror() == true) {
+				return ResponseHandler.generateResponse(400, "Receiver is in Terror list.");
+			}
 			//check if receiverBic matches with given bic
 			if(transaction.getReceiverBic().equals(receiver.getBank().getBic()) == false) {
 				System.out.println(transaction.getReceiverBic() + " " + receiver.getBank().getBic());
@@ -286,6 +295,11 @@ public class EmployeeService {
 	}
 
 	public ResponseEntity<Object> finalizeTransaction(TransactionDto transaction) {
+		String day = LocalDate.now().getDayOfWeek().name();
+		
+		if(day.equals("SATURDAY") || day.equals("SUNDAY")) {
+			return ResponseHandler.generateResponse(400, "You are on holiday. Go party!");
+		}
 		// TODO Auto-generated method stub
 		if(transaction.getTransactionId() == 0) {
 			return ResponseHandler.generateResponse(400, "Please enter transactionId");
@@ -344,7 +358,6 @@ public class EmployeeService {
 				return ResponseHandler.generateResponse(400, "Receiver doesn't exist.");
 			}
 			Customer receiver = receiverOptional.get();
-			
 			//if any 1 of above true, check receiver terror list entry
 			
 			
@@ -366,14 +379,25 @@ public class EmployeeService {
 			transactionOriginal.setTransferFee(transferFee);
 			transactionOriginal.setTransferDate(new Date());
 			transactionOriginal.setEmployee(emp);
-			transactionOriginal.setStatus(Status.ACCEPTED);
+			if(receiver.isTerror() == true) {
+				transactionOriginal.setStatus(Status.REJECTED);
+				transactionOriginal.setEmployeeRemarks("Receiver in terror list");
+			}else {				
+				transactionOriginal.setStatus(Status.ACCEPTED);
+				transactionOriginal.setEmployeeRemarks("Secure transaction");
+			}
 		}else if(transaction.getStatus() == Status.REJECTED) {
 			transactionOriginal.setTransferDate(new Date());
 			transactionOriginal.setEmployee(emp);
 			transactionOriginal.setStatus(Status.REJECTED);
+			transactionOriginal.setEmployeeRemarks("Employee fought with wife.");
 		}
 		
 		transactionOriginal = tr.save(transactionOriginal);
+		
+		if(transactionOriginal.getEmployeeRemarks().equals("Receiver in terror list")) {
+			return ResponseHandler.generateResponse(400, "Receiver is in terror list, hence transaction is rejected.");
+		};
 		
 		ResponseEntity<Object> response = ResponseHandler.generateResponse(200, transactionOriginal);
 		
